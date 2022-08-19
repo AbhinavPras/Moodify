@@ -5,6 +5,8 @@
     flex-direction: column; 
     align-items: center; 
     justify-content: space-between;
+    /* background-color: turquoise; */
+    /* background-image: url("../cartoon-faces-expressive-eyes-and-mouth-smiling-crying-and-surprised-character-face-expressions-caricature-comic-emotions-or-emoticon-doodle-isolated-illustration-icons-set-free-vector.webp"); */
 }
 
 .app__video {

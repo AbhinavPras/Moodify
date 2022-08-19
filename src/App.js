@@ -2,14 +2,11 @@ import { useRef, useEffect, useState } from 'react';
 import './App.css';
 import * as faceapi from "face-api.js";
 import { FaceExpressions } from 'face-api.js';
-// import express from 'express';
+import * as React from 'react';
 
 function App() {
 
   let number = 0;
-  let client_id = '42637a421e564dffacf392cd0fef3df6';
-  let client_Secret = '9fba64c6a89d45539af2fe64ac3fc37c';
-  const [accessToken, setaccessToken] = useState("")
 
   const videoRef = useRef();
   const canvasRef = useRef();
@@ -21,17 +18,17 @@ function App() {
 
   }, []);
   
-    const loadModels = () => {
-      Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-        faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-        faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-        faceapi.nets.faceExpressionNet.loadFromUri('/models'),
-      ]).then(() => {
-        faceDetection();
-      })
-    };
-
+  const loadModels = () => {
+    Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+      faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+      faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+      faceapi.nets.faceExpressionNet.loadFromUri('/models'),
+    ]).then(() => {
+      faceDetection();
+    })
+  };
+  
   const startVideo = () => {
     navigator.mediaDevices.getUserMedia({ video: true })
       .then((currentStream) => {
@@ -41,20 +38,19 @@ function App() {
         console.error(err)
       });
   }
-
+  
   const faceDetection = async () => {
     setInterval(async() => {
       if (number==1)
       {
         return
       }
-      
+
       const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
       let emotions_displayed = detections[0].expressions;
       if (emotions_displayed != undefined)
       {
         number++;
-        
       }
       let max_emotion = 0
       let final_emotion = ""
@@ -66,6 +62,30 @@ function App() {
           final_emotion = key
         }
       }
+
+      if (final_emotion == 'neutral')
+      {
+        final_emotion = 'moody';
+      }
+
+      const options = {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': 'fb5b0920f6msh804c07d430a8210p1d0067jsn6dc2b529beba',
+          'X-RapidAPI-Host': 'spotify23.p.rapidapi.com'
+        }
+      };
+      
+      fetch('https://spotify23.p.rapidapi.com/search/?q=' + final_emotion + '&type=playlist&limit=5', options)
+        .then(response => response.json())
+        .then( (val) => {
+          var playlist_number = Math.floor(Math.random() * 5);
+          const selected_playlist = val.playlists.items[playlist_number].data['uri'];
+          const selected_playlist_id = selected_playlist.slice(17);
+          const playlist_opened = 'https://open.spotify.com/playlist/' + selected_playlist_id; 
+          window.open(playlist_opened,'_blank');
+        } )
+        .catch(err => console.error(err));
   
       canvasRef.current.innerHtml = faceapi.createCanvasFromMedia(videoRef.current);
       faceapi.matchDimensions(canvasRef.current, {
@@ -82,7 +102,7 @@ function App() {
       faceapi.draw.drawFaceLandmarks(canvasRef.current, resized)
       faceapi.draw.drawFaceExpressions(canvasRef.current, resized)
 
-    }, 1000)
+    }, 2000)
   }
 
   return (
@@ -93,7 +113,7 @@ function App() {
         <video crossOrigin='anonymous' ref={videoRef} autoPlay ></video>
       </div>
         <canvas ref={canvasRef} width="940" height="650" className='app__canvas' />
-      
+        <button onClick={() => {console.log("Button clicked")}} > Take picture! </button>
     </div>
   );
 }
