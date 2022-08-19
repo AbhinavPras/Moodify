@@ -7,6 +7,13 @@ import * as React from 'react';
 function App() {
 
   let number = 0;
+  
+  const msRest = require("@azure/ms-rest-js");
+  const Face = require("@azure/cognitiveservices-face");
+  const { v4: uuid } = require('uuid');
+  
+  const credentials = new msRest.ApiKeyCredentials({ inHeader: { 'Ocp-Apim-Subscription-Key': key } });
+  const client = new Face.FaceClient(credentials, endpoint);
 
   const videoRef = useRef();
   const canvasRef = useRef();
@@ -45,6 +52,20 @@ function App() {
       {
         return
       }
+      
+      async function DetectFaceRecognize(url) {
+        // Detect faces from image URL. Since only recognizing, use the recognition model 4.
+        // We use detection model 3 because we are only retrieving the qualityForRecognition attribute.
+        // Result faces with quality for recognition lower than "medium" are filtered out.
+        let detected_faces = await client.face.detectWithUrl(url,
+            {
+                detectionModel: "detection_03",
+                recognitionModel: "recognition_04",
+                returnFaceAttributes: ["QualityForRecognition"]
+            });
+        return detected_faces.filter(face => face.faceAttributes.qualityForRecognition == 'high' || face.faceAttributes.qualityForRecognition == 'medium');
+    }
+
 
       const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
       let emotions_displayed = detections[0].expressions;
@@ -76,7 +97,7 @@ function App() {
         }
       };
       
-      fetch('https://spotify23.p.rapidapi.com/search/?q=' + final_emotion + '&type=playlist&limit=5', options)
+      fetch('https://spotify23.p.rapidapi.com/search/?q=' + final_emotion + '&type=playlist&limit=50', options)
         .then(response => response.json())
         .then( (val) => {
           var playlist_number = Math.floor(Math.random() * 5);
